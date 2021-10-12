@@ -1,0 +1,31 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+  - name: install required modules
+    pip:
+        executable: /home/leandro/Devel/redhat/venv/bin/pip
+        requirements: "{{ lookup('env','PWD') }}/requirements.txt"
+  - name: checking if application is alive
+    
+
+  - name: building new tomcat image
+    community.docker.docker_image:
+        docker_host: "unix://var/run/docker.sock"
+        # I would not add latest by default in a prod. enviroment
+        # i have done this way only because it is enough for the requirements.
+        build:
+            path: "{{ lookup('env','PWD') }}"
+        name: "tsa:{{ version | default('latest') }}"
+        source: build
+        state: present
+
+  - name: running tomcat container
+    community.docker.docker_container:
+        container_default_behavior: no_defaults
+        name: tomcat-simple-application
+        image: tsa:latest
+        state: started
+        ports:
+            - 8080:8080

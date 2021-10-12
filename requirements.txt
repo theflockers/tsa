@@ -1,0 +1,4 @@
+ansible
+pytest
+docker
+requests
