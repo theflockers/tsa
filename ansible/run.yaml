@@ -3,29 +3,39 @@
   connection: local
   gather_facts: no
   tasks:
+  - name: sets working directory
+    set_fact: cwd="{{ lookup('env','PWD') }}"
+
   - name: install required modules
     pip:
-        executable: /home/leandro/Devel/redhat/venv/bin/pip
-        requirements: "{{ lookup('env','PWD') }}/requirements.txt"
+        executable: "{{ lookup('env', 'PIP3') }}"
+        requirements: "{{ cwd }}/requirements.txt"
   - name: checking if application is alive
-    
+    command: py.test
+    args:
+        chdir: "{{ cwd }}"
+    ignore_errors: True
+    no_log: True
+    register: pytest_result
 
-  - name: building new tomcat image
-    community.docker.docker_image:
-        docker_host: "unix://var/run/docker.sock"
-        # I would not add latest by default in a prod. enviroment
-        # i have done this way only because it is enough for the requirements.
-        build:
-            path: "{{ lookup('env','PWD') }}"
-        name: "tsa:{{ version | default('latest') }}"
-        source: build
-        state: present
+  - block:
+      - name: building new tomcat image
+        community.docker.docker_image:
+            docker_host: "unix://var/run/docker.sock"
+            # I would not add latest by default in a prod. enviroment
+            # i have done this way only because it is enough for the requirements.
+            build:
+                path: "{{ cwd }}"
+            name: "tsa:{{ version | default('latest') }}"
+            source: build
+            state: present
 
-  - name: running tomcat container
-    community.docker.docker_container:
-        container_default_behavior: no_defaults
-        name: tomcat-simple-application
-        image: tsa:latest
-        state: started
-        ports:
-            - 8080:8080
+      - name: running tomcat container
+        community.docker.docker_container:
+            container_default_behavior: no_defaults
+            name: tomcat-simple-application
+            image: tsa:latest
+            state: started
+            ports:
+                - 8080:8080
+    when: pytest_result.rc != 0
