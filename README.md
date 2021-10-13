@@ -22,5 +22,5 @@ tsa $ ./run.sh
 If your user has no writeable access to the docker socket (defaults to  `unix:///var/run/docker.sock`) you need `sudo`
 
 ```
-tsa $ sudo ./run
+tsa $ sudo ./run.sh
 ```
