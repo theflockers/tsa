@@ -1,4 +1,3 @@
-ansible
 pytest
 docker
 requests
